@@ -11,9 +11,7 @@
 name: Docker
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  push:
     branches: [develop, main]
   workflow_dispatch:
     inputs:
@@ -42,9 +40,7 @@ jobs:
   build-and-push:
     name: Build & Push Production Image
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+    if: always()
 
     permissions:
       contents: read
