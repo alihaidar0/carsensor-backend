@@ -1,5 +1,6 @@
 import environ
 from pathlib import Path
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -131,7 +132,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Tokyo"
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-from celery.schedules import crontab
+
 CELERY_BEAT_SCHEDULE = {
     "scrape-carsensor-hourly": {
         "task": "apps.scraper.tasks.scrape_cars",
