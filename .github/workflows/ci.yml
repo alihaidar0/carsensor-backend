@@ -130,9 +130,9 @@ jobs:
       - name: pip-audit
         run: |
           python3 -m venv /tmp/audit-venv
-          /tmp/audit-venv/bin/pip install pip-audit
-          /tmp/audit-venv/bin/pip install -e "." --no-deps
-          /tmp/audit-venv/bin/pip-audit --skip-editable || true
+          /tmp/audit-venv/bin/pip install pip-audit uv
+          /tmp/audit-venv/bin/uv export --no-hashes --no-dev -o /tmp/requirements.txt || true
+          /tmp/audit-venv/bin/pip-audit -r /tmp/requirements.txt || true
       - name: Trivy scan
         uses: aquasecurity/trivy-action@v0.35.0
         with:
