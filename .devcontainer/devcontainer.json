@@ -75,6 +75,6 @@
     "5678": { "label": "Debugger", "onAutoForward": "silent" }
   },
 
-  "postCreateCommand": "git config --global --add safe.directory /workspace",
+  "postCreateCommand": "git config --local --add safe.directory /workspace 2>/dev/null || true",
   "remoteUser": "root"
 }
