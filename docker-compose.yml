@@ -18,7 +18,7 @@ name: django-project
 services:
 
   app:
-    image: ${DOCKERHUB_USERNAME:-yourusername}/django-devcontainer:latest
+    image: ${DOCKERHUB_USERNAME:-alihaidar199527}/django-devcontainer:latest
     container_name: django_app
     restart: unless-stopped
     volumes:
