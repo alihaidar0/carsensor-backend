@@ -12,7 +12,9 @@ class Car(models.Model):
     year = models.PositiveIntegerField()
     mileage = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=12, decimal_places=2)
-    price_usd = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    price_usd = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
 
     # Details
     color = models.CharField(max_length=50, blank=True)

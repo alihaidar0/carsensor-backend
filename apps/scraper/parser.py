@@ -59,6 +59,7 @@ def parse_year(text: str) -> int:
     if not text:
         return 0
     import re
+
     match = re.search(r"(\d{4})", text)
     if match:
         return int(match.group(1))
@@ -96,14 +97,19 @@ def parse_car_card(card) -> dict | None:
 
         external_id = ""
         import re
+
         id_match = re.search(r"CS(\w+)", url)
         if id_match:
             external_id = id_match.group(0)
         else:
             external_id = url.split("/")[-2] if "/" in url else url[-20:]
 
-        brand_tag = card.select_one(".carName .maker") or card.select_one("[class*='maker']")
-        model_tag = card.select_one(".carName .car") or card.select_one("[class*='carName']")
+        brand_tag = card.select_one(".carName .maker") or card.select_one(
+            "[class*='maker']"
+        )
+        model_tag = card.select_one(".carName .car") or card.select_one(
+            "[class*='carName']"
+        )
         brand = brand_tag.get_text(strip=True) if brand_tag else ""
         model = model_tag.get_text(strip=True) if model_tag else ""
 
@@ -118,7 +124,9 @@ def parse_car_card(card) -> dict | None:
         price_text = price_tag.get_text(strip=True) if price_tag else "0"
         price = parse_price(price_text)
 
-        mileage_tag = card.select_one(".mileage") or card.select_one("[class*='mileage']")
+        mileage_tag = card.select_one(".mileage") or card.select_one(
+            "[class*='mileage']"
+        )
         mileage_text = mileage_tag.get_text(strip=True) if mileage_tag else "0"
         mileage = parse_mileage(mileage_text)
 
@@ -127,7 +135,9 @@ def parse_car_card(card) -> dict | None:
         year = parse_year(year_text)
 
         img_tag = card.select_one("img")
-        image_url = img_tag.get("src", "") or img_tag.get("data-src", "") if img_tag else ""
+        image_url = (
+            img_tag.get("src", "") or img_tag.get("data-src", "") if img_tag else ""
+        )
 
         specs = {}
         spec_items = card.select("li") or card.select("span[class*='spec']")

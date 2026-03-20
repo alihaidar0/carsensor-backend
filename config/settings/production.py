@@ -97,6 +97,7 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 CORS_ALLOW_CREDENTIALS = True
 
+
 # ── Structured JSON logging for GCP Cloud Logging ────────────
 # Cloud Logging indexes these fields automatically.
 # View logs: GCP Console → Logging → Log Explorer
