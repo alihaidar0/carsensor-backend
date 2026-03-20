@@ -97,7 +97,7 @@ services:
       - django-network
 
   celery:
-    image: ${DOCKERHUB_USERNAME:-yourusername}/django-devcontainer:latest
+    image: ${DOCKERHUB_USERNAME:-alihaidar199527}/django-devcontainer:latest
     container_name: django_celery
     restart: unless-stopped
     volumes:
@@ -125,7 +125,7 @@ services:
       - django-network
 
   celery-beat:
-    image: ${DOCKERHUB_USERNAME:-yourusername}/django-devcontainer:latest
+    image: ${DOCKERHUB_USERNAME:-alihaidar199527}/django-devcontainer:latest
     container_name: django_celery_beat
     restart: unless-stopped
     volumes:
