@@ -1,0 +1,83 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Django: Run Server",
+      "type": "shell",
+      "command": "python manage.py runserver 0.0.0.0:8000",
+      "isBackground": true,
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Django: Migrate",
+      "type": "shell",
+      "command": "python manage.py migrate",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Django: Make Migrations",
+      "type": "shell",
+      "command": "python manage.py makemigrations",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Django: Shell Plus",
+      "type": "shell",
+      "command": "python manage.py shell_plus",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Django: Create Superuser",
+      "type": "shell",
+      "command": "python manage.py createsuperuser",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Pytest: All Tests",
+      "type": "shell",
+      "command": "pytest -v --tb=short",
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Pytest: With Coverage",
+      "type": "shell",
+      "command": "pytest --cov=. --cov-report=html --cov-report=term-missing",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Ruff: Lint + Fix",
+      "type": "shell",
+      "command": "ruff check . --fix",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Ruff: Format",
+      "type": "shell",
+      "command": "ruff format .",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "uv: Add Package",
+      "type": "shell",
+      "command": "uv add ${input:packageName}",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "packageName",
+      "type": "promptString",
+      "description": "Package name to install with uv add"
+    }
+  ]
+}

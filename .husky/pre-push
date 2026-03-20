@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+while read LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
+  BRANCH=$(echo "$REMOTE_REF" | sed 's|refs/heads/||')
+
+  if [ "$BRANCH" = "main" ]; then
+    echo ""
+    echo "╔══════════════════════════════════════════════════╗"
+    echo "║  ❌  Direct push to 'main' is blocked            ║"
+    echo "╠══════════════════════════════════════════════════╣"
+    echo "║  Push to develop, then open a PR → main.        ║"
+    echo "╚══════════════════════════════════════════════════╝"
+    echo ""
+    exit 1
+  fi
+
+done
+
+exit 0

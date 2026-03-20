@@ -1,0 +1,67 @@
+# ============================================================
+#  docker/Dockerfile.prod
+#  Multi-stage production image
+#  Target: GCP Cloud Run · Neon DB · Cloudflare R2
+# ============================================================
+
+# ── Stage 1: Build dependencies ──────────────────────────────
+ARG PYTHON_VERSION=3.14
+FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_CACHE_DIR=/root/.cache/uv
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc libpq-dev libssl-dev libffi-dev \
+    libjpeg-dev libpng-dev libwebp-dev curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
+WORKDIR /app
+COPY pyproject.toml uv.lock* ./
+
+RUN uv venv .venv && \
+    uv pip install --python .venv/bin/python --no-cache \
+        -r pyproject.toml
+
+# ── Stage 2: Production runtime ───────────────────────────────
+FROM python:${PYTHON_VERSION}-slim-bookworm AS production
+
+LABEL org.opencontainers.image.title="Django Production"
+LABEL org.opencontainers.image.description="GCP Cloud Run ready Django app"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    PYTHONUTF8=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    VIRTUAL_ENV="/app/.venv" \
+    DJANGO_SETTINGS_MODULE=config.settings.production \
+    PORT=8080
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 libssl3 libjpeg62-turbo libpng16-16 libwebp7 \
+    ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 1001 django \
+    && useradd --uid 1001 --gid django --shell /bin/bash --create-home django
+
+WORKDIR /app
+
+COPY --from=builder --chown=django:django /app/.venv /app/.venv
+COPY --chown=django:django . .
+
+USER django
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health/ || exit 1
+
+EXPOSE ${PORT}
+
+COPY --chown=django:django scripts/entrypoint.prod.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -1,0 +1,80 @@
+{
+  "name": "Django Project",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+
+  "remoteEnv": {
+    "PYTHONPATH": "/workspace",
+    "GIT_SSH_COMMAND": "ssh -o StrictHostKeyChecking=accept-new"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "batisteo.vscode-django",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "humao.rest-client",
+        "mikestead.dotenv",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "oderwat.indent-rainbow",
+        "PKief.material-icon-theme",
+        "aaron-bond.better-comments",
+        "usernamehw.errorlens",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.analysis.extraPaths": ["/workspace"],
+        "editor.tabSize": 4,
+        "editor.rulers": [88, 120],
+        "editor.renderWhitespace": "boundary",
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.fontSize": 14,
+        "files.associations": {
+          "**/*.html": "django-html",
+          "**/*.env*": "dotenv"
+        },
+        "emmet.includeLanguages": {
+          "django-html": "html"
+        },
+        "sqltools.connections": [
+          {
+            "name": "Django Dev DB",
+            "driver": "PostgreSQL",
+            "server": "db",
+            "port": 5432,
+            "database": "django_dev",
+            "username": "django",
+            "password": "django_pass"
+          }
+        ]
+      }
+    }
+  },
+
+  "forwardPorts": [8000, 5432, 6379, 8025, 5678],
+  "portsAttributes": {
+    "8000": { "label": "Django", "onAutoForward": "openBrowser" },
+    "8025": { "label": "Mailpit", "onAutoForward": "silent" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "5678": { "label": "Debugger", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "git config --global --add safe.directory /workspace",
+  "remoteUser": "root"
+}

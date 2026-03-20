@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+
+if [ -n "$STAGED_PY" ]; then
+  echo "  → ruff lint..."
+  npx ruff check $STAGED_PY --fix --exit-non-zero-on-fix && \
+    git add $STAGED_PY || {
+      echo "❌ ruff lint failed. Run: ruff check . --fix"
+      exit 1
+    }
+
+  echo "  → ruff format..."
+  npx ruff format $STAGED_PY --check || {
+    echo "❌ ruff format failed. Run: ruff format ."
+    exit 1
+  }
+
+  echo "  → checking for debug statements..."
+  if echo "$STAGED_PY" | xargs grep -En 'pdb\.set_trace|breakpoint\(\)|import pdb' 2>/dev/null; then
+    echo "❌ Debug statements found. Remove before committing."
+    exit 1
+  fi
+fi
+
+echo "  → checking for .env files..."
+STAGED_ENV=$(git diff --cached --name-only | grep -E '^\.env' | grep -v '\.example$' || true)
+if [ -n "$STAGED_ENV" ]; then
+  echo "❌ Attempting to commit secret file: $STAGED_ENV"
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed"
