@@ -1,6 +1,5 @@
 import logging
 from celery import shared_task
-from django.utils import timezone
 from apps.cars.models import Car
 from .parser import scrape_all_cars
 

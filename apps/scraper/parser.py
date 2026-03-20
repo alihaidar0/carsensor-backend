@@ -2,14 +2,6 @@ import logging
 from datetime import datetime, timezone
 import httpx
 from bs4 import BeautifulSoup
-from .translator import (
-    translate_fuel_type,
-    translate_transmission,
-    translate_body_type,
-    translate_drive_type,
-    translate_color,
-    translate_location,
-)
 
 logger = logging.getLogger(__name__)
 
