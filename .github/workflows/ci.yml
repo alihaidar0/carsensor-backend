@@ -125,17 +125,14 @@ jobs:
     name: Security (pip-audit)
     runs-on: ubuntu-latest
     needs: lint
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: pip-audit
         run: |
-          python3 -m venv /tmp/audit-venv
-          /tmp/audit-venv/bin/pip install pip-audit uv
-          /tmp/audit-venv/bin/uv export --no-hashes --no-dev -o /tmp/requirements.txt || true
-          /tmp/audit-venv/bin/pip-audit -r /tmp/requirements.txt || true
+          uv export --no-hashes --no-dev -o /tmp/requirements.txt || true
+          uvx pip-audit -r /tmp/requirements.txt || true
       - name: Trivy scan
         uses: aquasecurity/trivy-action@v0.35.0
         with:
