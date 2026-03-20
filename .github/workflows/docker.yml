@@ -32,7 +32,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/django-prod
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/carsensor-backend-prod
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
