@@ -23,9 +23,7 @@ ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 
-RUN uv venv .venv && \
-    uv pip install --python .venv/bin/python --no-cache \
-        -r pyproject.toml
+RUN uv sync --frozen --no-dev --no-install-project
 
 # ── Stage 2: Production runtime ───────────────────────────────
 FROM python:${PYTHON_VERSION}-slim-bookworm AS production
