@@ -129,9 +129,10 @@ jobs:
       - uses: actions/checkout@v5
       - name: pip-audit
         run: |
-          pip install pip-audit uv
-          uv pip install --system -e "."
-          pip-audit --skip-editable || true
+          python3 -m venv /tmp/audit-venv
+          /tmp/audit-venv/bin/pip install pip-audit uv
+          /tmp/audit-venv/bin/uv pip install -e "."
+          /tmp/audit-venv/bin/pip-audit --skip-editable || true
       - name: Trivy scan
         uses: aquasecurity/trivy-action@v0.35.0
         with:
