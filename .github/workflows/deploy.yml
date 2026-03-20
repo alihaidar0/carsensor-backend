@@ -1,197 +1,25 @@
-# ============================================================
-#  .github/workflows/deploy.yml
+# ==============================================================
+# .github/workflows/deploy.yml
 #
-#  Deploys to GCP Cloud Run after docker.yml succeeds on main.
-#
-#  Pipeline:
-#    main → docker.yml (prod image) → deploy.yml
-#      1. deploy staging
-#      2. smoke test
-#      3. deploy production
-#      4. notify
-# ============================================================
+# Deploys to Render on every push to main.
+# Render pulls latest code from GitHub and rebuilds.
+# ==============================================================
 
 name: Deploy
 
 on:
-  workflow_run:
-    workflows: ["Docker"]
-    types: [completed]
+  push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      image_tag:
-        description: "Image tag to deploy"
-        required: false
-        default: "latest"
-      target:
-        description: "Deploy target"
-        required: true
-        type: choice
-        options: [staging-only, staging-and-prod, prod-only]
-        default: staging-and-prod
-      skip_smoke_test:
-        description: "Skip smoke test"
-        required: false
-        type: boolean
-        default: false
-
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
-
-env:
-  PROD_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/django-prod
-  IMAGE_TAG: ${{ github.event.inputs.image_tag || 'latest' }}
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-
-  check-docker:
-    name: Verify Docker build passed
+  deploy:
+    name: Deploy to Render
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
-    steps:
-      - run: echo "✅ Docker build passed — deploying"
-
-  deploy-staging:
-    name: Deploy → Staging
-    runs-on: ubuntu-latest
-    needs: check-docker
-    if: github.event.inputs.target != 'prod-only'
-    environment:
-      name: staging
-      url: ${{ steps.deploy.outputs.url }}
-    outputs:
-      url: ${{ steps.deploy.outputs.url }}
-
-    steps:
-      - uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - uses: google-github-actions/setup-gcloud@v2
-
-      - name: Deploy to staging
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ secrets.CLOUD_RUN_SERVICE_STAGING }}
-          region: ${{ secrets.GCP_REGION }}
-          image: ${{ env.PROD_IMAGE }}:${{ env.IMAGE_TAG }}
-          flags: >-
-            --min-instances=0
-            --max-instances=3
-            --memory=512Mi
-            --cpu=1
-            --port=8080
-            --set-env-vars=DJANGO_SETTINGS_MODULE=config.settings.production
-          secrets: >-
-            SECRET_KEY=django-secret-key:latest,
-            DATABASE_URL=database-url-staging:latest,
-            R2_ACCESS_KEY_ID=r2-access-key:latest,
-            R2_SECRET_ACCESS_KEY=r2-secret-key:latest,
-            R2_BUCKET_NAME=r2-bucket-name:latest,
-            R2_ENDPOINT_URL=r2-endpoint-url:latest,
-            REDIS_URL=redis-url-staging:latest
-
-  smoke-test:
-    name: Smoke Test
-    runs-on: ubuntu-latest
-    needs: deploy-staging
-    if: |
-      github.event.inputs.skip_smoke_test != 'true' &&
-      needs.deploy-staging.result == 'success'
-
-    steps:
-      - name: Wait for Cloud Run
-        run: sleep 15
-
-      - name: Health check
-        run: |
-          URL="${{ needs.deploy-staging.outputs.url }}"
-          RESPONSE=$(curl -sf --retry 5 --retry-delay 5 -w "\n%{http_code}" "$URL/health/")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
-          echo "HTTP $HTTP_CODE — $BODY"
-          if [[ "$HTTP_CODE" != "200" ]]; then
-            echo "❌ Health check failed"
-            exit 1
-          fi
-          DB_STATUS=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['services']['database'])")
-          if [[ "$DB_STATUS" != "ok" ]]; then
-            echo "❌ DB check failed: $DB_STATUS"
-            exit 1
-          fi
-          echo "✅ Smoke test passed"
-
-  deploy-prod:
-    name: Deploy → Production
-    runs-on: ubuntu-latest
-    needs: [deploy-staging, smoke-test]
-    if: |
-      needs.smoke-test.result == 'success' &&
-      github.event.inputs.target != 'staging-only'
-    environment:
-      name: production
-      url: ${{ steps.deploy-prod.outputs.url }}
-
-    steps:
-      - uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - uses: google-github-actions/setup-gcloud@v2
-
-      - name: Deploy to production
-        id: deploy-prod
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ secrets.CLOUD_RUN_SERVICE_PROD }}
-          region: ${{ secrets.GCP_REGION }}
-          image: ${{ env.PROD_IMAGE }}:${{ env.IMAGE_TAG }}
-          flags: >-
-            --min-instances=1
-            --max-instances=10
-            --memory=512Mi
-            --cpu=1
-            --port=8080
-            --set-env-vars=DJANGO_SETTINGS_MODULE=config.settings.production
-          secrets: >-
-            SECRET_KEY=django-secret-key:latest,
-            DATABASE_URL=database-url:latest,
-            R2_ACCESS_KEY_ID=r2-access-key:latest,
-            R2_SECRET_ACCESS_KEY=r2-secret-key:latest,
-            R2_BUCKET_NAME=r2-bucket-name:latest,
-            R2_ENDPOINT_URL=r2-endpoint-url:latest,
-            REDIS_URL=redis-url:latest
-
-  notify:
-    name: Notify
-    runs-on: ubuntu-latest
-    needs: [deploy-staging, smoke-test, deploy-prod]
     if: always()
+
     steps:
-      - uses: actions/github-script@v7
-        with:
-          script: |
-            const staging = '${{ needs.deploy-staging.result }}';
-            const smoke   = '${{ needs.smoke-test.result }}';
-            const prod    = '${{ needs.deploy-prod.result }}';
-            const icon    = prod === 'success' ? '✅' : '❌';
-            const body = `### ${icon} Deployment Summary
-            | Stage | Status |
-            |-------|--------|
-            | Staging | ${staging} |
-            | Smoke test | ${smoke} |
-            | Production | ${prod} |
-            **Image:** \`${{ env.PROD_IMAGE }}:${{ env.IMAGE_TAG }}\`
-            **Commit:** ${{ github.sha }}`;
-            await github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: '${{ github.sha }}',
-              body
-            });
+      - name: Trigger Render Deploy Hook
+        run: |
+          curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}" | \
+          python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('deploy',{}).get('id','triggered'))"

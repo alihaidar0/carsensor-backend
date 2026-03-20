@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: carsensor-backend
+    runtime: python
+    buildCommand: "pip install uv && uv sync --frozen --no-dev"
+    startCommand: "bash scripts/entrypoint.prod.sh"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: PYTHON_VERSION
+        value: 3.14.3
