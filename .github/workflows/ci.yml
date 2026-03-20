@@ -136,7 +136,7 @@ jobs:
           uv pip install --system -e "."
           pip-audit --skip-editable || true
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           scan-type: config
           scan-ref: docker/Dockerfile.prod
