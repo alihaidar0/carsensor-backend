@@ -105,18 +105,23 @@ services:
       - uv-cache:/root/.cache/uv
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.development
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
       DATABASE_URL: postgres://${POSTGRES_USER:-django}:${POSTGRES_PASSWORD:-django_pass}@db:5432/${POSTGRES_DB:-django_dev}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     working_dir: /workspace
     command: >
       sh -c "
         if [ -f manage.py ]; then
-          celery -A config worker -l INFO --pool=solo
+          uv run celery -A config worker -l INFO --pool=solo
         else
           echo 'Waiting for Django project...' && sleep infinity
         fi
@@ -133,17 +138,24 @@ services:
       - uv-cache:/root/.cache/uv
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.development
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
       DATABASE_URL: postgres://${POSTGRES_USER:-django}:${POSTGRES_PASSWORD:-django_pass}@db:5432/${POSTGRES_DB:-django_dev}
+      REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
+    # FIX #1 (same as celery): wait for healthy db and redis before starting.
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     working_dir: /workspace
     command: >
       sh -c "
         if [ -f manage.py ]; then
-          celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+          uv run celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
         else
           echo 'Waiting for Django project...' && sleep infinity
         fi
