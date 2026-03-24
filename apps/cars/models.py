@@ -8,7 +8,7 @@ class Car(models.Model):
 
     # Core fields
     brand = models.CharField(max_length=100)
-    model = models.CharField(max_length=100)
+    model = models.CharField(max_length=500)
     year = models.PositiveIntegerField()
     mileage = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=12, decimal_places=2)
